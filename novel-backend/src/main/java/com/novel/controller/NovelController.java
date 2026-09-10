@@ -85,7 +85,9 @@ public class NovelController {
         if (novel == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Novel not found");
         }
-        String title = (request.title() == null || request.title().isBlank()) ? "未命名章节" : request.title();
+        // 标题原样保存（空标题也保留），是否可发布统一由 ChapterValidator 校验；
+        // 不能在这里用默认标题顶替，否则空标题新建的章节会绕过发布限制。
+        String title = request.title() == null ? "" : request.title();
         String content = request.content() == null ? "" : request.content();
         Chapter chapter = dataRepository.createChapter(id, title, content);
         return ResponseEntity.status(HttpStatus.CREATED).body(chapter);

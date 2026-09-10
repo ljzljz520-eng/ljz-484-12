@@ -93,6 +93,21 @@ class NovelControllerPublishTest {
     }
 
     @Test
+    void publishRejectsBlankTitleCreatedDirectly() throws Exception {
+        // 空标题 / 纯空白标题新建章节（绕过浏览器直接调 API），
+        // 后端不得用默认标题顶替，发布时必须以"标题为空"拒绝
+        long nullTitleId = createDraft(null, "他走进城里，".repeat(20));
+        mockMvc.perform(post("/api/chapters/" + nullTitleId + "/publish"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasItem(containsString("标题"))));
+
+        long blankTitleId = createDraft("   ", "他走进城里，".repeat(20));
+        mockMvc.perform(post("/api/chapters/" + blankTitleId + "/publish"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasItem(containsString("标题"))));
+    }
+
+    @Test
     void publishReturns404ForMissingChapter() throws Exception {
         mockMvc.perform(post("/api/chapters/99999/publish"))
                 .andExpect(status().isNotFound());
