@@ -9,6 +9,8 @@ public class Chapter {
     private Integer orderNo;
     private String content;
     private LocalDateTime createdAt;
+    /** 是否已发布。只有通过发布校验的章节才能标记为已发布。 */
+    private boolean published = false;
 
     public Chapter() {
     }
@@ -68,5 +70,13 @@ public class Chapter {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean isPublished() {
+        return published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
     }
 }

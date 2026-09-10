@@ -53,6 +53,9 @@ public class DataRepository {
                                 "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=800&auto=format&fit=crop",
                                 LocalDateTime.now());
                 novels.put(novel3.getId(), novel3);
+
+                // 预置内容视为已发布
+                chapters.values().forEach(c -> c.setPublished(true));
         }
 
         public List<Novel> findAllNovels(String keyword, int page, int size) {
@@ -85,5 +88,28 @@ public class DataRepository {
 
         public Chapter findChapterById(Long id) {
                 return chapters.get(id);
+        }
+
+        /** 新建章节草稿（未发布状态），章节号自动顺延 */
+        public Chapter createChapter(Long novelId, String title, String content) {
+                int nextOrderNo = chapters.values().stream()
+                                .filter(c -> c.getNovelId().equals(novelId))
+                                .mapToInt(c -> c.getOrderNo() == null ? 0 : c.getOrderNo())
+                                .max()
+                                .orElse(0) + 1;
+                long id = chapterIdGenerator.getAndIncrement();
+                Chapter chapter = new Chapter(id, novelId, title, nextOrderNo, content, LocalDateTime.now());
+                chapters.put(id, chapter);
+                return chapter;
+        }
+
+        /** 保存作者对章节标题与正文的修改（不改变发布状态） */
+        public Chapter updateChapter(Long id, String title, String content) {
+                Chapter chapter = chapters.get(id);
+                if (chapter != null) {
+                        chapter.setTitle(title);
+                        chapter.setContent(content);
+                }
+                return chapter;
         }
 }

@@ -25,7 +25,10 @@
 - `GET /api/novels`: 获取小说列表（支持分页与搜索）。
 - `GET /api/novels/{id}`: 获取小说详细信息及章节目录。
 - `GET /api/chapters/{id}`: 获取具体章节正文内容。
+- `POST /api/novels/{id}/chapters`: 新建章节草稿（未发布状态）。
+- `PUT /api/chapters/{id}`: 保存作者对章节标题与正文的修改。
+- `POST /api/chapters/{id}/publish`: 发布章节。服务端重复校验（标题非空、正文不少于 50 字、无未替换占位符），不通过返回 400 及错误明细，通过后才标记为已发布。
 
 ## 5. 数据模型
 - **Novel (小说)**: ID, Title, Description, CoverUrl, CreatedAt.
-- **Chapter (章节)**: ID, NovelId, Title, OrderNo, Content, CreatedAt.
+- **Chapter (章节)**: ID, NovelId, Title, OrderNo, Content, CreatedAt, Published.
