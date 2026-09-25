@@ -28,12 +28,25 @@ public class DataRepository {
                                 LocalDateTime.now());
                 novels.put(novel1.getId(), novel1);
 
-                chapters.put(chapterIdGenerator.get(), new Chapter(chapterIdGenerator.getAndIncrement(), novel1.getId(),
-                                "第一章：Hello World", 1, "他醒来时，发现眼前只有绿色的代码流...", LocalDateTime.now()));
-                chapters.put(chapterIdGenerator.get(), new Chapter(chapterIdGenerator.getAndIncrement(), novel1.getId(),
-                                "第二章：变量声明", 2, "“你是谁？”面前的机器人冷冷地问道。“Define me.”他回答。", LocalDateTime.now()));
-                chapters.put(chapterIdGenerator.get(), new Chapter(chapterIdGenerator.getAndIncrement(), novel1.getId(),
-                                "第三章：循环陷阱", 3, "时间仿佛陷入了死循环，他必须找到 break 的条件。", LocalDateTime.now()));
+                LocalDateTime now = LocalDateTime.now();
+                chapters.put(chapterIdGenerator.get(), publishedChapter(chapterIdGenerator.getAndIncrement(), novel1.getId(),
+                                "第一章：Hello World", 1,
+                                "他醒来时，发现眼前只有绿色的代码流。\n"
+                                + "终端上的光标一闪一闪，像是在等待他敲下生命中的第一行命令。他试着抬手，指尖却穿过了全息键盘，带起一串细碎的光点。\n"
+                                + "\"系统启动完成，欢迎来到第零号宇宙。\"一个毫无感情的声音在脑海中响起。他深吸一口气，在虚空中敲下两个单词：Hello World。",
+                                now));
+                chapters.put(chapterIdGenerator.get(), publishedChapter(chapterIdGenerator.getAndIncrement(), novel1.getId(),
+                                "第二章：变量声明", 2,
+                                "“你是谁？”面前的机器人冷冷地问道，金属瞳孔中流淌着淡蓝色的光。\n"
+                                + "他握紧了手中的数据线，努力让声音听起来不那么颤抖：“Define me.” 这是他醒来后记住的第二句话，也是这个世界定义存在的唯一方式。\n"
+                                + "机器人沉默了三秒，像是在解析这句语法。随后它侧身让出通道：“身份已声明，请进，变量。”",
+                                now));
+                chapters.put(chapterIdGenerator.get(), publishedChapter(chapterIdGenerator.getAndIncrement(), novel1.getId(),
+                                "第三章：循环陷阱", 3,
+                                "时间仿佛陷入了死循环，他必须找到 break 的条件。\n"
+                                + "走廊尽头的钟声第七次敲响，窗外的黄昏第七次落下，连咖啡杯上的热气都保持着一模一样的弧度。\n"
+                                + "他在笔记本上划掉又一个错误的猜想，忽然注意到每次循环开始时，门牌上的数字都会比上一次多一。出口也许不在循环之外，而在累加的尽头。",
+                                now));
 
                 Novel novel2 = new Novel(novelIdGenerator.getAndIncrement(),
                                 "灵气复苏时代的架构师",
@@ -42,10 +55,18 @@ public class DataRepository {
                                 LocalDateTime.now());
                 novels.put(novel2.getId(), novel2);
 
-                chapters.put(chapterIdGenerator.get(), new Chapter(chapterIdGenerator.getAndIncrement(), novel2.getId(),
-                                "第一章：单体应用破碎", 1, "天地巨变，世界原本的秩序（Monolith）崩塌了。", LocalDateTime.now()));
-                chapters.put(chapterIdGenerator.get(), new Chapter(chapterIdGenerator.getAndIncrement(), novel2.getId(),
-                                "第二章：服务发现", 2, "他感应到了周围的灵气节点，就像注册中心里的服务一样清晰。", LocalDateTime.now()));
+                chapters.put(chapterIdGenerator.get(), publishedChapter(chapterIdGenerator.getAndIncrement(), novel2.getId(),
+                                "第一章：单体应用破碎", 1,
+                                "天地巨变，世界原本的秩序（Monolith）在一道惊雷中崩塌了。\n"
+                                + "山脉断裂成各自漂浮的孤岛，城市像被一只无形的手拆成了独立运转的模块，连风都在不同的区块里刮着不同的方向。\n"
+                                + "他站在废墟之间，第一次看见灵气以接口报文的形态在空中流动。一个旧时代结束了，而新的架构图，正等着有人落笔。",
+                                now));
+                chapters.put(chapterIdGenerator.get(), publishedChapter(chapterIdGenerator.getAndIncrement(), novel2.getId(),
+                                "第二章：服务发现", 2,
+                                "他盘膝坐下，感应到了周围漂浮的灵气节点，就像注册中心里排列整齐的服务实例一样清晰。\n"
+                                + "每一个节点都在向天地广播自己的名字、心跳与所能提供的法门。他试着把神识探过去，立刻收到了一连串心跳回执。\n"
+                                + "原来修仙界的第一步从不是引气入体，而是先在天地间完成一次成功的服务注册。",
+                                now));
 
                 Novel novel3 = new Novel(novelIdGenerator.getAndIncrement(),
                                 "只有我知道剧情的测试员",
@@ -85,5 +106,39 @@ public class DataRepository {
 
         public Chapter findChapterById(Long id) {
                 return chapters.get(id);
+        }
+
+        /**
+         * 新增或更新章节。新章节会自动分配 ID，并排在该小说当前章节的最后（orderNo 递增）。
+         */
+        public Chapter saveChapter(Chapter chapter) {
+                if (chapter.getId() == null) {
+                        chapter.setId(chapterIdGenerator.getAndIncrement());
+                        if (chapter.getOrderNo() == null) {
+                                chapter.setOrderNo(nextOrderNo(chapter.getNovelId()));
+                        }
+                }
+                if (chapter.getCreatedAt() == null) {
+                        chapter.setCreatedAt(LocalDateTime.now());
+                }
+                chapters.put(chapter.getId(), chapter);
+                return chapter;
+        }
+
+        private int nextOrderNo(Long novelId) {
+                return chapters.values().stream()
+                                .filter(c -> c.getNovelId().equals(novelId))
+                                .map(Chapter::getOrderNo)
+                                .filter(Objects::nonNull)
+                                .max(Integer::compareTo)
+                                .orElse(0) + 1;
+        }
+
+        /** 构造一条“已发布”的种子章节（种子数据对读者可见）。 */
+        private Chapter publishedChapter(Long id, Long novelId, String title, int orderNo, String content,
+                        LocalDateTime createdAt) {
+                return new Chapter(id, novelId, title, orderNo, content,
+                                com.novel.service.ChapterValidator.countWords(content),
+                                Chapter.STATUS_PUBLISHED, createdAt, createdAt);
         }
 }

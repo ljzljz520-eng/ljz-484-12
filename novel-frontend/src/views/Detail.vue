@@ -17,38 +17,55 @@
             <h1 class="novel-title text-gradient">{{ novel.title }}</h1>
             <div class="meta-tags">
                  <span class="meta-item">{{ formatDate(novel.createdAt) }}</span>
-                 <span class="meta-item">{{ chapters.length }} 章</span>
+                 <span class="meta-item">{{ publishedCount }} 章已发布<template v-if="draftCount > 0"> · {{ draftCount }} 篇草稿</template></span>
             </div>
             <p class="description">{{ novel.description }}</p>
-            <el-button type="primary" size="large" round class="start-read-btn" @click="startReading">
-                开始阅读
-            </el-button>
+            <div class="action-row">
+              <el-button type="primary" size="large" round class="start-read-btn" @click="startReading">
+                  开始阅读
+              </el-button>
+              <el-button size="large" round class="write-btn" @click="writeNewChapter">
+                  ✍️ 写新章节
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="chapters-section glass-panel">
-        <h2 class="section-title">章节目录</h2>
+        <div class="section-header">
+          <h2 class="section-title">章节目录</h2>
+          <el-button text type="primary" @click="writeNewChapter">+ 写新章节</el-button>
+        </div>
         <div class="chapter-grid">
           <router-link
               v-for="chapter in chapters"
               :key="chapter.id"
-              :to="'/chapter/' + chapter.id"
+              :to="chapterTarget(chapter)"
               class="chapter-card"
+              :class="{ 'is-draft': chapter.status === 'DRAFT' }"
           >
               <span class="chapter-no">{{ formatNumber(chapter.orderNo) }}</span>
-              <span class="chapter-title">{{ chapter.title }}</span>
+              <span class="chapter-title">{{ chapter.title || '（未命名章节）' }}</span>
+              <el-tag
+                v-if="chapter.status === 'DRAFT'"
+                type="warning"
+                size="small"
+                effect="plain"
+                class="draft-tag"
+              >草稿</el-tag>
+              <el-tag v-else type="success" size="small" effect="plain" class="draft-tag">已发布</el-tag>
               <span class="status-dot"></span>
           </router-link>
         </div>
-         <el-empty v-if="chapters.length === 0" description="暂无章节" />
+         <el-empty v-if="chapters.length === 0" description="暂无章节，点击「写新章节」开始创作" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { ArrowLeft } from '@element-plus/icons-vue'
@@ -59,6 +76,21 @@ const novel = ref(null)
 const chapters = ref([])
 const loading = ref(true)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+
+const publishedCount = computed(() => chapters.value.filter((c) => c.status === 'PUBLISHED').length)
+const draftCount = computed(() => chapters.value.filter((c) => c.status === 'DRAFT').length)
+
+// 草稿章节对读者不可见，点击应进入写作页继续修改/发布
+const chapterTarget = (chapter) => {
+  if (chapter.status === 'DRAFT') {
+    return `/novel/${route.params.id}/write/${chapter.id}`
+  }
+  return `/chapter/${chapter.id}`
+}
+
+const writeNewChapter = () => {
+  router.push(`/novel/${route.params.id}/write`)
+}
 
 const fetchDetail = async () => {
   try {
@@ -77,8 +109,9 @@ const goBack = () => {
 }
 
 const startReading = () => {
-    if (chapters.value.length > 0) {
-        router.push('/chapter/' + chapters.value[0].id)
+    const firstPublished = chapters.value.find((c) => c.status === 'PUBLISHED')
+    if (firstPublished) {
+        router.push('/chapter/' + firstPublished.id)
     }
 }
 
@@ -201,6 +234,39 @@ onMounted(fetchDetail)
     padding-left: 10px;
     border-left: 4px solid var(--primary-color);
     color: var(--slate-800);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+}
+
+.action-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.write-btn {
+    padding: 20px 32px;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.chapter-card.is-draft {
+    background: #fffbeb;
+    border-style: dashed;
+    border-color: #f59e0b;
+}
+
+.draft-tag {
+    margin-right: 12px;
 }
 
 .chapters-section {

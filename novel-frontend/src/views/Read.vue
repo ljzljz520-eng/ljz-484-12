@@ -2,13 +2,24 @@
   <div class="read-page" v-loading="loading">
 
      <div class="reader-container">
-         <div class="content-paper" v-if="chapter">
+         <el-result
+             v-if="loadError"
+             icon="warning"
+             title="章节暂不可读"
+             :sub-title="loadError"
+         >
+             <template #extra>
+                 <el-button type="primary" round @click="goHome">返回首页</el-button>
+             </template>
+         </el-result>
+
+         <div class="content-paper" v-else-if="chapter">
              <h2 class="chapter-heading">{{ chapter.title }}</h2>
              <div class="text-content font-serif">
                  <p v-for="(para, idx) in paragraphs" :key="idx">{{ para }}</p>
              </div>
          </div>
-         
+
          <div class="footer-controls" v-if="chapter">
              <!-- Navigation logic could be added here if we fetched next/prev IDs -->
              <el-button class="nav-chapter-btn glass-panel" @click="goBack">返回目录</el-button>
@@ -26,6 +37,7 @@ import { ArrowLeft, Setting } from '@element-plus/icons-vue'
 const route = useRoute()
 const router = useRouter()
 const chapter = ref(null)
+const loadError = ref('')
 const loading = ref(true)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
@@ -34,7 +46,9 @@ const fetchChapter = async () => {
         const res = await axios.get(`${API_URL}/chapters/${route.params.id}`)
         chapter.value = res.data
     } catch(err) {
-        console.error(err)
+        loadError.value = err.response?.status === 404
+            ? (err.response?.data?.message || '章节不存在或尚未发布')
+            : '加载失败，请稍后重试'
     } finally {
         loading.value = false
     }
@@ -51,6 +65,10 @@ const goBack = () => {
     } else {
         router.push('/')
     }
+}
+
+const goHome = () => {
+    router.push('/')
 }
 
 onMounted(fetchChapter)
