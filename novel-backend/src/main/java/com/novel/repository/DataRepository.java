@@ -77,13 +77,39 @@ public class DataRepository {
         }
 
         public List<Chapter> findChaptersByNovelId(Long novelId) {
+                return findChaptersByNovelId(novelId, false);
+        }
+
+        /**
+         * 查询章节列表。
+         * @param includeAll true 时返回草稿 + 已发布（作者端使用）；
+         *                   false 时只返回已发布章节（读者端使用）。
+         */
+        public List<Chapter> findChaptersByNovelId(Long novelId, boolean includeAll) {
                 return chapters.values().stream()
                                 .filter(c -> c.getNovelId().equals(novelId))
+                                .filter(c -> includeAll || "PUBLISHED".equals(c.getStatus()))
                                 .sorted(Comparator.comparing(Chapter::getOrderNo))
                                 .collect(Collectors.toList());
         }
 
         public Chapter findChapterById(Long id) {
                 return chapters.get(id);
+        }
+
+        /**
+         * 新建章节，初始状态为草稿。章节序号取该书现有最大值 + 1。
+         */
+        public Chapter createChapter(Long novelId, String title, String content) {
+                int nextOrder = chapters.values().stream()
+                                .filter(c -> c.getNovelId().equals(novelId))
+                                .map(Chapter::getOrderNo)
+                                .filter(Objects::nonNull)
+                                .max(Integer::compareTo)
+                                .orElse(0) + 1;
+                long id = chapterIdGenerator.getAndIncrement();
+                Chapter chapter = new Chapter(id, novelId, title, nextOrder, content, "DRAFT", LocalDateTime.now());
+                chapters.put(id, chapter);
+                return chapter;
         }
 }

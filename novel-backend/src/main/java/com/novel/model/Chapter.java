@@ -8,17 +8,24 @@ public class Chapter {
     private String title;
     private Integer orderNo;
     private String content;
+    /** 章节状态：DRAFT（草稿，读者不可见）/ PUBLISHED（已发布） */
+    private String status;
     private LocalDateTime createdAt;
 
     public Chapter() {
     }
 
     public Chapter(Long id, Long novelId, String title, Integer orderNo, String content, LocalDateTime createdAt) {
+        this(id, novelId, title, orderNo, content, "PUBLISHED", createdAt);
+    }
+
+    public Chapter(Long id, Long novelId, String title, Integer orderNo, String content, String status, LocalDateTime createdAt) {
         this.id = id;
         this.novelId = novelId;
         this.title = title;
         this.orderNo = orderNo;
         this.content = content;
+        this.status = status;
         this.createdAt = createdAt;
     }
 
@@ -60,6 +67,14 @@ public class Chapter {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedAt() {
